@@ -52,15 +52,17 @@
 .addItemBtn:hover { background: #ebebeb; }
 
 .chargesSection { margin-bottom: 1.5rem; }
-.chargesSectionTitle { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-.chargeGroup { border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
-.chargeGroupHeader { padding: 8px 12px; background: #f8f8f8; font-size: 13px; font-weight: 500; color: #222; display: flex; align-items: center; justify-content: space-between; }
-.chargeHint { font-size: 11px; color: #aaa; font-weight: 400; }
-.chargeModeToggle { display: flex; border: 1px solid #e0e0e0; border-radius: 5px; overflow: hidden; }
-.chargeModeBtn { padding: 3px 9px; font-size: 11px; cursor: pointer; border: none; background: transparent; color: #888; font-family: inherit; }
-.chargeModeBtnActive { background: #1a1a1a !important; color: #fff !important; }
-.chargeInputs { display: flex; gap: 8px; padding: 10px 12px; align-items: center; }
-.chargeSuffix { font-size: 13px; color: #888; white-space: nowrap; }
+.chargeRow { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #eee; }
+.chargeRowLabel { flex: 1; min-width: 0; }
+.chargeRowLabelText { font-size: 13px; color: #666; }
+.chargeHint { font-size: 11px; color: #bbb; display: block; margin-top: 1px; }
+.chargeModeToggle { display: flex; border: 1px solid #e0e0e0; border-radius: 5px; overflow: hidden; flex-shrink: 0; }
+.chargeModeBtn { padding: 3px 8px; font-size: 11px; cursor: pointer; border: none; background: transparent; color: #aaa; font-family: inherit; }
+.chargeModeBtnActive { background: #f0f0f0 !important; color: #111 !important; }
+.chargeValueWrap { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.chargeInput { width: 64px; padding: 5px 8px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 13px; color: #111; background: #fff; text-align: right; font-family: inherit; outline: none; }
+.chargeInput:focus { border-color: #aaa; }
+.chargeSuffix { font-size: 12px; color: #aaa; width: 14px; }
 
 .totalsBlock { border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px 14px; margin-bottom: 1.5rem; }
 .totalsRow { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; color: #666; font-variant-numeric: tabular-nums; }

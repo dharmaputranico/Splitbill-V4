@@ -303,34 +303,30 @@ export default function SplitBillApp() {
             <button className={styles.addItemBtn} onClick={addItem}>+ Add</button>
           </div>
 
-          {/* Charges */}
+          {/* Charges — inline rows */}
           <div className={styles.chargesSection}>
-            <div className={styles.chargesSectionTitle}>Service &amp; Tax</div>
             {[
-              { key:'svc', label:'Service charge', hint:'on subtotal', mode:svcMode, setMode:setSvcMode, value:svcValue, setValue:setSvcValue },
-              { key:'tax', label:'Tax (PPN)', hint:'on subtotal + service', mode:taxMode, setMode:setTaxMode, value:taxValue, setValue:setTaxValue },
-            ].map(({ key, label, hint, mode, setMode, value, setValue }) => (
-              <div key={key} className={styles.chargeGroup}>
-                <div className={styles.chargeGroupHeader}>
-                  <span>{label} <span className={styles.chargeHint}>{hint}</span></span>
+              { key:'svc', label:'Service charge', hint:'on subtotal', mode:svcMode, setMode:setSvcMode, value:svcValue, setValue:setSvcValue, hasToggle:true },
+              { key:'tax', label:'Tax (PPN)', hint:'on subtotal + service', mode:taxMode, setMode:setTaxMode, value:taxValue, setValue:setTaxValue, hasToggle:true },
+              { key:'other', label:'Other charges', hint:'fixed amount', mode:'fixed', setMode:null, value:otherFixed, setValue:setOtherFixed, hasToggle:false },
+            ].map(({ key, label, hint, mode, setMode, value, setValue, hasToggle }) => (
+              <div key={key} className={styles.chargeRow}>
+                <div className={styles.chargeRowLabel}>
+                  <span className={styles.chargeRowLabelText}>{label}</span>
+                  <span className={styles.chargeHint}>{hint}</span>
+                </div>
+                {hasToggle && (
                   <div className={styles.chargeModeToggle}>
                     <button className={`${styles.chargeModeBtn} ${mode==='percent'?styles.chargeModeBtnActive:''}`} onClick={()=>setMode('percent')}>%</button>
                     <button className={`${styles.chargeModeBtn} ${mode==='fixed'?styles.chargeModeBtnActive:''}`} onClick={()=>setMode('fixed')}>Rp</button>
                   </div>
-                </div>
-                <div className={styles.chargeInputs}>
-                  <input type="number" value={value} onChange={e=>setValue(e.target.value)} placeholder="0" min="0" step="any" className={styles.flexInput}/>
+                )}
+                <div className={styles.chargeValueWrap}>
+                  <input type="number" value={value} onChange={e=>setValue(e.target.value)} placeholder="0" min="0" step="any" className={styles.chargeInput}/>
                   <span className={styles.chargeSuffix}>{mode==='percent'?'%':'Rp'}</span>
                 </div>
               </div>
             ))}
-            <div className={styles.chargeGroup}>
-              <div className={styles.chargeGroupHeader}><span>Other charges</span><span className={styles.chargeHint}>fixed amount</span></div>
-              <div className={styles.chargeInputs}>
-                <input type="number" value={otherFixed} onChange={e=>setOtherFixed(e.target.value)} placeholder="0" min="0" step="any" className={styles.flexInput}/>
-                <span className={styles.chargeSuffix}>Rp</span>
-              </div>
-            </div>
           </div>
 
           {/* Totals */}
