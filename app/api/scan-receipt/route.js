@@ -3,58 +3,39 @@ import Anthropic from '@anthropic-ai/sdk';
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(request) {
-  // Step 1: Check API key exists
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('[scan-receipt] ANTHROPIC_API_KEY is not set');
-    return Response.json({
-      error: 'API key not configured',
-      debug: 'ANTHROPIC_API_KEY environment variable is missing'
-    }, { status: 500 });
+    return Response.json({ error: 'API key not configured', debug: 'ANTHROPIC_API_KEY environment variable is missing' }, { status: 500 });
   }
 
   let imageBase64, mediaType;
-
-  // Step 2: Parse request body
   try {
     const body = await request.json();
     imageBase64 = body.imageBase64;
     mediaType = body.mediaType;
   } catch (e) {
-    console.error('[scan-receipt] Failed to parse request body:', e.message);
     return Response.json({ error: 'Invalid request body', debug: e.message }, { status: 400 });
   }
 
-  if (!imageBase64) {
-    return Response.json({ error: 'No image provided' }, { status: 400 });
-  }
+  if (!imageBase64) return Response.json({ error: 'No image provided' }, { status: 400 });
 
-  // Sanitize media type — Claude only accepts these four values
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   const safeMediaType = allowedTypes.includes(mediaType) ? mediaType : 'image/jpeg';
 
   console.log(`[scan-receipt] Starting scan. mediaType=${safeMediaType}, imageSize=${imageBase64.length} chars`);
 
-  // Step 3: Call Claude API
   let response;
   try {
     response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1000,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: safeMediaType,
-                data: imageBase64
-              }
-            },
-            {
-              type: 'text',
-              text: `You are a receipt scanner for an Indonesian restaurant bill splitter app.
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: safeMediaType, data: imageBase64 } },
+          {
+            type: 'text',
+            text: `You are a receipt scanner for an Indonesian restaurant bill splitter app.
 
 Carefully read every line of this receipt and extract the data into JSON.
 
@@ -77,30 +58,18 @@ RULES FOR CHARGES (svc, tax, other):
 11. other_fixed = only explicit extra charges that are NOT service or tax (e.g. packaging fee). Do NOT put change/cash here.
 
 Indonesian receipt context: service charge is calculated on subtotal; tax (PPN) is calculated on subtotal + service charge.`
-            }
-          ]
-        }
-      ]
+          }
+        ]
+      }]
     });
   } catch (e) {
-    console.error('[scan-receipt] Anthropic API call failed:', e.message, e.status, e.error);
-    return Response.json({
-      error: 'Anthropic API call failed',
-      debug: e.message,
-      status: e.status || null,
-      anthropic_error: e.error || null
-    }, { status: 500 });
+    console.error('[scan-receipt] Anthropic API call failed:', e.message, e.status);
+    return Response.json({ error: 'Anthropic API call failed', debug: e.message, status: e.status || null, anthropic_error: e.error || null }, { status: 500 });
   }
 
-  // Step 4: Extract text from response
-  const rawText = response.content
-    .map(b => b.type === 'text' ? b.text : '')
-    .join('')
-    .trim();
-
+  const rawText = response.content.map(b => b.type === 'text' ? b.text : '').join('').trim();
   console.log('[scan-receipt] Raw Claude response:', rawText.slice(0, 300));
 
-  // Step 5: Parse JSON
   try {
     const cleaned = rawText.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(cleaned);
@@ -108,10 +77,6 @@ Indonesian receipt context: service charge is calculated on subtotal; tax (PPN) 
     return Response.json({ result: parsed });
   } catch (e) {
     console.error('[scan-receipt] JSON parse failed. Raw text was:', rawText);
-    return Response.json({
-      error: 'Failed to parse Claude response as JSON',
-      debug: e.message,
-      raw_response: rawText.slice(0, 500)
-    }, { status: 500 });
+    return Response.json({ error: 'Failed to parse Claude response as JSON', debug: e.message, raw_response: rawText.slice(0, 500) }, { status: 500 });
   }
 }

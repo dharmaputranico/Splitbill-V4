@@ -1,12 +1,12 @@
 export const metadata = {
   title: 'SplitBill — fair splits, zero drama',
-  description: 'Split restaurant bills fairly with AI receipt scanning',
+  description: 'Split restaurant bills fairly with AI receipt scanning. Free, no sign-up needed.',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, padding: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <body style={{ margin: 0, padding: 0, fontFamily: 'system-ui, -apple-system, sans-serif', background: '#fafafa' }}>
         {children}
       </body>
     </html>
