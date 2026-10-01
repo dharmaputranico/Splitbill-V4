@@ -89,10 +89,216 @@
 }
 
 /* ── Shell ──────────────────────────────────────────── */
+.pageWrap {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
 .wrap {
   max-width: 520px;
   margin: 0 auto;
   padding: 24px 20px 48px;
+}
+
+/* ── Top bar ────────────────────────────────────────── */
+.topBar {
+  background: #1a1a1a;
+  padding: 0 20px;
+}
+
+.topBarInner {
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+}
+
+.topBarLogo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  background: #333;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topBarLogoText {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.topBarSub {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ── Step tabs ──────────────────────────────────────── */
+.stepTabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Override: tabs span full width of white card, not constrained inner */
+.pageWrap > .stepTabs {
+  max-width: 100%;
+}
+
+.stepTab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 4px;
+  cursor: default;
+  border-bottom: 2px solid transparent;
+  gap: 2px;
+}
+
+.stepTabActive {
+  border-bottom-color: #111;
+}
+
+.stepTabNum {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.stepTabActive .stepTabNum {
+  color: #111;
+}
+
+.stepTabLabel {
+  font-size: 11px;
+  color: #bbb;
+}
+
+.stepTabActive .stepTabLabel {
+  color: #111;
+}
+
+/* ── Upload zone ────────────────────────────────────── */
+.uploadZone {
+  border: 1.5px dashed #d0d0d0;
+  border-radius: 12px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: #fafafa;
+  margin-bottom: 12px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.uploadZone:hover {
+  border-color: #aaa;
+  background: #f4f4f4;
+}
+
+.uploadIcon {
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.uploadText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
+  margin: 0 0 4px;
+}
+
+.uploadHint {
+  font-size: 12px;
+  color: #aaa;
+  margin: 0;
+}
+
+.uploadPreview {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+/* ── Scan with AI button ────────────────────────────── */
+.scanWithAiBtn {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: background 0.15s;
+}
+
+.scanWithAiBtn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.scanWithAiBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── Or divider ─────────────────────────────────────── */
+.orDivider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.orLine {
+  flex: 1;
+  height: 1px;
+  background: #e8e8e8;
+}
+
+.orText {
+  font-size: 12px;
+  color: #bbb;
+  white-space: nowrap;
+}
+
+/* ── Restaurant input ───────────────────────────────── */
+.restaurantInput {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #111;
+  background: #fff;
+  outline: none;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.restaurantInput:focus {
+  border-color: #111;
+}
+
+.stepSubtitle {
+  font-size: 14px;
+  color: #888;
+  margin: -12px 0 20px;
 }
 
 .header {
