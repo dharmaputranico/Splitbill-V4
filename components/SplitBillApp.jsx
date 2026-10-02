@@ -126,19 +126,36 @@ export default function SplitBillApp() {
     setMembers((prev) => prev.filter((m) => m !== name));
   }
 
+  // Avatar colors per member index
+  const AVATAR_COLORS = ['#E8735A', '#5AAE8C', '#7B6FCA', '#E8A95A', '#5A8FCA', '#CA5A7B'];
+  function avatarColor(idx) { return AVATAR_COLORS[idx % AVATAR_COLORS.length]; }
+
   // ─── Allocation helpers ────────────────────────────────────────
+  // allocs[itemIdx][member] = { mode: 'equal'|'units', units: number, checked: bool }
   function getAlloc(itemIdx, member) {
-    return allocs[itemIdx]?.[member] || { mode: 'equal', units: 1 };
+    return allocs[itemIdx]?.[member] || { mode: 'equal', units: 1, checked: true };
   }
 
-  function setAllocMode(itemIdx, member, mode) {
+  function toggleMemberItem(itemIdx, member) {
+    const cur = getAlloc(itemIdx, member);
     setAllocs((prev) => ({
       ...prev,
       [itemIdx]: {
         ...prev[itemIdx],
-        [member]: { ...getAlloc(itemIdx, member), mode },
+        [member]: { ...cur, checked: !cur.checked },
       },
     }));
+  }
+
+  function setItemMode(itemIdx, mode) {
+    setAllocs((prev) => {
+      const cur = prev[itemIdx] || {};
+      const next = {};
+      members.forEach((m) => {
+        next[m] = { ...(cur[m] || { checked: true, units: 1 }), mode };
+      });
+      return { ...prev, [itemIdx]: next };
+    });
   }
 
   function setAllocUnits(itemIdx, member, units) {
@@ -151,23 +168,26 @@ export default function SplitBillApp() {
     }));
   }
 
-  function setAllEqual(itemIdx) {
-    const next = {};
-    members.forEach((m) => {
-      next[m] = { mode: 'equal', units: 1 };
-    });
-    setAllocs((prev) => ({ ...prev, [itemIdx]: next }));
-  }
-
   function setAllEqualGlobal() {
     const next = {};
     items.forEach((_, i) => {
       next[i] = {};
       members.forEach((m) => {
-        next[i][m] = { mode: 'equal', units: 1 };
+        next[i][m] = { mode: 'equal', units: 1, checked: true };
       });
     });
     setAllocs(next);
+  }
+
+  // Get current mode for an item (equal or units)
+  function getItemMode(itemIdx) {
+    const memberAllocs = members.map((m) => getAlloc(itemIdx, m));
+    return memberAllocs.some((a) => a.mode === 'units') ? 'units' : 'equal';
+  }
+
+  // Get checked members for an item
+  function getCheckedMembers(itemIdx) {
+    return members.filter((m) => getAlloc(itemIdx, m).checked !== false);
   }
 
   // ─── Results calculation ───────────────────────────────────────
@@ -175,44 +195,68 @@ export default function SplitBillApp() {
     const { svcAmt, taxAmt, total } = getCharges();
     const charges = svcAmt + taxAmt;
     const totals = {};
-    members.forEach((m) => (totals[m] = 0));
+    // breakdown[member] = [ { name, qty, share } ]
+    const breakdown = {};
+    members.forEach((m) => { totals[m] = 0; breakdown[m] = []; });
 
     items.forEach((item, i) => {
       const itemTotal = item.qty * item.price;
-      const memberAllocs = members.map((m) => getAlloc(i, m));
-      const hasUnits = memberAllocs.some((a) => a.mode === 'units');
+      const checkedMembers = members.filter((m) => getAlloc(i, m).checked !== false);
+      if (checkedMembers.length === 0) return;
 
-      if (hasUnits) {
-        const totalUnits = memberAllocs.reduce((s, a) => s + (a.mode === 'units' ? a.units : 1), 0);
-        members.forEach((m, mi) => {
-          const a = memberAllocs[mi];
-          const u = a.mode === 'units' ? a.units : 1;
-          totals[m] += itemTotal * (u / totalUnits);
+      const mode = getItemMode(i);
+
+      if (mode === 'units') {
+        const totalUnits = checkedMembers.reduce((s, m) => {
+          const a = getAlloc(i, m);
+          return s + (a.units || 1);
+        }, 0);
+        checkedMembers.forEach((m) => {
+          const a = getAlloc(i, m);
+          const u = a.units || 1;
+          const share = itemTotal * (u / totalUnits);
+          totals[m] += share;
+          breakdown[m].push({ name: item.name, qty: item.qty, share });
         });
       } else {
-        // equal split
-        members.forEach((m) => {
-          totals[m] += itemTotal / members.length;
+        // equal split among checked members
+        const share = itemTotal / checkedMembers.length;
+        checkedMembers.forEach((m) => {
+          totals[m] += share;
+          breakdown[m].push({ name: item.name, qty: item.qty, share });
         });
       }
     });
 
-    // distribute charges proportionally
+    // distribute charges proportionally to food subtotal
+    const foodSubtotal = members.reduce((s, m) => s + totals[m], 0);
     members.forEach((m) => {
-      totals[m] += charges * (totals[m] / subtotal);
+      const ratio = foodSubtotal > 0 ? totals[m] / foodSubtotal : 1 / members.length;
+      const svcShare = svcAmt * ratio;
+      const taxShare = taxAmt * ratio;
+      totals[m] += svcShare + taxShare;
+      breakdown[m]._svcShare = svcShare;
+      breakdown[m]._taxShare = taxShare;
     });
 
-    return { totals, svcAmt, taxAmt, total };
+    return { totals, svcAmt, taxAmt, total, breakdown };
   }
 
   // ─── Copy summary ──────────────────────────────────────────────
   function copyResults() {
-    const { totals, svcAmt, taxAmt, total } = calcResults();
+    const { totals, svcAmt, taxAmt, total, breakdown } = calcResults();
     let text = '🧾 Bill Split — splitbill.co.id\n\n';
     members.forEach((m) => {
       text += `${m}: ${fmt(totals[m])}\n`;
+      const items = breakdown[m];
+      items.forEach((it) => {
+        text += `  ${it.name} ×${it.qty} … ${fmt(it.share)}\n`;
+      });
+      if (items._svcShare) text += `  Service … ${fmt(items._svcShare)}\n`;
+      if (items._taxShare) text += `  Tax (PPN) … ${fmt(items._taxShare)}\n`;
+      text += '\n';
     });
-    text += `\nSubtotal: ${fmt(subtotal)}\n`;
+    text += `Subtotal: ${fmt(subtotal)}\n`;
     text += `Service: ${fmt(svcAmt)}\n`;
     text += `Tax: ${fmt(taxAmt)}\n`;
     text += `Total: ${fmt(total)}\n`;
@@ -559,60 +603,90 @@ export default function SplitBillApp() {
           <div className={styles.stepTab}><span className={styles.stepTabNum}>4</span><span className={styles.stepTabLabel}>Result</span></div>
         </div>
         <div className={styles.wrap}>
-        <h2 className={styles.stepTitle}>Who ate what?</h2>
+          <h2 className={styles.stepTitle}>Who ate what?</h2>
+          <p className={styles.stepSubtitle}>Use equal split or enter exact units per person (slices, pieces, cups…)</p>
 
-        <button className={styles.globalEqualBtn} onClick={setAllEqualGlobal}>
-          Split everything equally
-        </button>
-
-        {items.map((item, i) => (
-          <div key={i} className={styles.allocCard}>
-            <div className={styles.allocCardHeader}>
-              <span className={styles.allocItemName}>{item.name}</span>
-              <span className={styles.allocItemTotal}>{fmt(item.qty * item.price)}</span>
-            </div>
-
-            <button className={styles.equalBtn} onClick={() => setAllEqual(i)}>
-              Equal split
-            </button>
-
-            <div className={styles.allocMembers}>
-              {members.map((m) => {
-                const a = getAlloc(i, m);
-                return (
-                  <div key={m} className={styles.allocMemberRow}>
-                    <span className={styles.allocMemberAvatar}>{m[0].toUpperCase()}</span>
-                    <span className={styles.allocMemberName}>{m}</span>
+          {items.map((item, i) => {
+            const mode = getItemMode(i);
+            const checked = getCheckedMembers(i);
+            // preview share per checked member
+            const itemTotal = item.qty * item.price;
+            return (
+              <div key={i} className={styles.allocCard}>
+                <div className={styles.allocCardHeader}>
+                  <span className={styles.allocItemName}>{item.name}</span>
+                  <div className={styles.allocModeBtns}>
                     <button
-                      className={`${styles.modeBtn} ${a.mode === 'equal' ? styles.modeBtnActive : ''}`}
-                      onClick={() => setAllocMode(i, m, 'equal')}
+                      className={`${styles.allocModeBtn} ${mode === 'equal' ? styles.allocModeBtnActive : ''}`}
+                      onClick={() => setItemMode(i, 'equal')}
                     >Equal</button>
                     <button
-                      className={`${styles.modeBtn} ${a.mode === 'units' ? styles.modeBtnActive : ''}`}
-                      onClick={() => setAllocMode(i, m, 'units')}
+                      className={`${styles.allocModeBtn} ${mode === 'units' ? styles.allocModeBtnActive : ''}`}
+                      onClick={() => setItemMode(i, 'units')}
                     >Units</button>
-                    {a.mode === 'units' && (
-                      <input
-                        className={styles.unitsInput}
-                        type="number"
-                        min="0"
-                        value={a.units}
-                        onChange={(e) => setAllocUnits(i, m, e.target.value)}
-                      />
-                    )}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+                </div>
+                <p className={styles.allocItemPrice}>{fmt(itemTotal)}</p>
 
-        <div className={styles.navRow}>
-          <button className={styles.backBtn} onClick={() => setStep(2)}>← Back</button>
-          <button className={styles.nextBtn} onClick={() => setStep(4)}>
-            See results →
-          </button>
-        </div>
+                <div className={styles.allocGrid}>
+                  {members.map((m, mi) => {
+                    const a = getAlloc(i, m);
+                    const isChecked = a.checked !== false;
+                    // compute this person's share for preview
+                    let shareAmt = 0;
+                    if (isChecked) {
+                      if (mode === 'units') {
+                        const totalUnits = checked.reduce((s, cm) => s + (getAlloc(i, cm).units || 1), 0);
+                        shareAmt = totalUnits > 0 ? itemTotal * ((a.units || 1) / totalUnits) : 0;
+                      } else {
+                        shareAmt = checked.length > 0 ? itemTotal / checked.length : 0;
+                      }
+                    }
+                    const pct = itemTotal > 0 ? Math.round((shareAmt / itemTotal) * 100) : 0;
+                    return (
+                      <div key={m} className={styles.allocCell} onClick={() => toggleMemberItem(i, m)}>
+                        <div
+                          className={styles.allocAvatar}
+                          style={{ background: avatarColor(mi), opacity: isChecked ? 1 : 0.25 }}
+                        >
+                          {m[0].toUpperCase()}
+                        </div>
+                        <span className={`${styles.allocCellName} ${!isChecked ? styles.allocCellNameOff : ''}`}>
+                          {m}
+                        </span>
+                        <div className={`${styles.allocCheck} ${isChecked ? styles.allocCheckOn : ''}`}>
+                          {isChecked && <svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none"/></svg>}
+                        </div>
+                        {isChecked && mode === 'units' ? (
+                          <div className={styles.allocUnitsWrap} onClick={(e) => e.stopPropagation()}>
+                            <input
+                              className={styles.allocUnitsInput}
+                              type="number"
+                              min="0"
+                              value={a.units || 1}
+                              onChange={(e) => setAllocUnits(i, m, e.target.value)}
+                            />
+                            <span className={styles.allocUnitLabel}>units</span>
+                          </div>
+                        ) : (
+                          <span className={styles.allocCellShare}>
+                            {isChecked ? `${pct}% · ${fmt(shareAmt)}` : '—'}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          <div className={styles.navRow}>
+            <button className={styles.backBtn} onClick={() => setStep(2)}>← Back</button>
+            <button className={styles.nextBtn} onClick={() => setStep(4)}>
+              Calculate splits →
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -620,7 +694,7 @@ export default function SplitBillApp() {
 
   // Step 4 — Results
   if (step === 4) {
-    const { totals, svcAmt, taxAmt, total } = calcResults();
+    const { totals, svcAmt, taxAmt, total, breakdown } = calcResults();
     return (
       <div className={styles.pageWrap}>
         <div className={styles.topBar}>
@@ -644,67 +718,78 @@ export default function SplitBillApp() {
           <div className={`${styles.stepTab} ${styles.stepTabActive}`}><span className={styles.stepTabNum}>4</span><span className={styles.stepTabLabel}>Result</span></div>
         </div>
         <div className={styles.wrap}>
-        <h2 className={styles.stepTitle}>Here's who pays what</h2>
+          <h2 className={styles.stepTitle}>Here's who pays what</h2>
 
-        <div className={styles.resultCards}>
-          {members.map((m) => (
-            <div key={m} className={styles.resultCard}>
-              <span className={styles.resultAvatar}>{m[0].toUpperCase()}</span>
-              <span className={styles.resultName}>{m}</span>
-              <span className={styles.resultAmt}>{fmt(totals[m])}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className={styles.summaryBox}>
-          <div className={styles.summaryRow}>
-            <span>Subtotal</span>
-            <span>{fmt(subtotal)}</span>
+          {/* 2-column summary grid */}
+          <div className={styles.resultSummaryGrid}>
+            {members.map((m, mi) => (
+              <div key={m} className={styles.resultSummaryCard}>
+                <div className={styles.resultSummaryAvatar} style={{ background: avatarColor(mi) }}>
+                  {m[0].toUpperCase()}
+                </div>
+                <span className={styles.resultSummaryName}>{m}</span>
+                <span className={styles.resultSummaryAmt}>{fmt(totals[m])}</span>
+              </div>
+            ))}
           </div>
-          <div className={styles.summaryRow}>
-            <span>Service</span>
-            <span>{fmt(svcAmt)}</span>
-          </div>
-          <div className={styles.summaryRow}>
-            <span>Tax (PPN)</span>
-            <span>{fmt(taxAmt)}</span>
-          </div>
-          <div className={`${styles.summaryRow} ${styles.summaryTotal}`}>
-            <span>Total</span>
-            <span>{fmt(total)}</span>
-          </div>
-        </div>
 
-        <button className={styles.copyBtn} onClick={copyResults}>
-          📋 Copy summary
-        </button>
+          {/* Per-person itemized breakdown */}
+          {members.map((m, mi) => {
+            const bd = breakdown[m];
+            return (
+              <div key={m} className={styles.resultBreakdownCard}>
+                <div className={styles.resultBreakdownHeader}>
+                  <div className={styles.resultBreakdownAvatar} style={{ background: avatarColor(mi) }}>
+                    {m[0].toUpperCase()}
+                  </div>
+                  <span className={styles.resultBreakdownName}>{m}</span>
+                  <span className={styles.resultBreakdownTotal}>{fmt(totals[m])}</span>
+                </div>
+                <div className={styles.resultBreakdownItems}>
+                  {bd.map((it, j) => (
+                    <div key={j} className={styles.resultBreakdownRow}>
+                      <span className={styles.resultBreakdownItemName}>{it.name} ×{it.qty}</span>
+                      <span className={styles.resultBreakdownItemAmt}>{fmt(it.share)}</span>
+                    </div>
+                  ))}
+                  {bd._svcShare > 0 && (
+                    <div className={styles.resultBreakdownRow}>
+                      <span className={styles.resultBreakdownChargeName}>Service charge</span>
+                      <span className={styles.resultBreakdownItemAmt}>{fmt(bd._svcShare)}</span>
+                    </div>
+                  )}
+                  {bd._taxShare > 0 && (
+                    <div className={styles.resultBreakdownRow}>
+                      <span className={styles.resultBreakdownChargeName}>Tax (PPN)</span>
+                      <span className={styles.resultBreakdownItemAmt}>{fmt(bd._taxShare)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
 
-        {/* Saweria tip jar */}
-        <div className={styles.saweriaBox}>
-          <p className={styles.saweriaText}>
-            SplitBill is free forever. If it saved you an awkward conversation, buy the founder a coffee ☕
-          </p>
-          <a
-            href="https://saweria.co/splitbill"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.saweriaBtn}
-          >
-            Support via Saweria
-          </a>
-        </div>
+          {/* Saweria tip jar */}
+          <div className={styles.saweriaBox}>
+            <p className={styles.saweriaText}>
+              SplitBill is free forever. If it saved you an awkward conversation, buy the founder a coffee ☕
+            </p>
+            <a
+              href="https://saweria.co/splitbill"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.saweriaBtn}
+            >
+              Support via Saweria
+            </a>
+          </div>
 
-        <div className={styles.navRow}>
-          <button className={styles.backBtn} onClick={() => setStep(3)}>← Adjust</button>
-          <button className={styles.nextBtn} onClick={() => {
-            setStep(1);
-            setItems([]);
-            setMembers([]);
-            setAllocs({});
-          }}>
-            New split
-          </button>
-        </div>
+          <div className={styles.navRow}>
+            <button className={styles.backBtn} onClick={() => setStep(3)}>← Back</button>
+            <button className={styles.copyBtn2} onClick={copyResults}>
+              📋 Copy summary
+            </button>
+          </div>
         </div>
       </div>
     );

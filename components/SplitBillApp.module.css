@@ -615,209 +615,305 @@
 }
 
 /* ── Allocate ───────────────────────────────────────── */
-.globalEqualBtn {
-  width: 100%;
-  background: #f4f4f4;
-  border: none;
-  border-radius: 8px;
-  padding: 11px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #555;
-  cursor: pointer;
-  margin-bottom: 16px;
-}
-
-.globalEqualBtn:hover {
-  background: #eee;
-}
-
 .allocCard {
   border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 14px;
+  padding: 16px;
   margin-bottom: 14px;
+  background: #fff;
 }
 
 .allocCardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 2px;
 }
 
 .allocItemName {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #111;
+  flex: 1;
+  margin-right: 8px;
 }
 
-.allocItemTotal {
-  font-size: 14px;
-  font-weight: 500;
-  color: #555;
+.allocItemPrice {
+  font-size: 13px;
+  color: #999;
+  margin: 0 0 12px;
 }
 
-.equalBtn {
-  background: none;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 5px 12px;
-  font-size: 12px;
-  color: #777;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
-.equalBtn:hover {
-  background: #f5f5f5;
-}
-
-.allocMembers {
+.allocModeBtns {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.allocMemberRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.allocMemberAvatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #111;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
+  gap: 4px;
   flex-shrink: 0;
 }
 
-.allocMemberName {
-  flex: 1;
-  font-size: 13px;
-  color: #333;
-}
-
-.modeBtn {
+.allocModeBtn {
   background: none;
   border: 1px solid #e0e0e0;
-  border-radius: 5px;
-  padding: 4px 10px;
+  border-radius: 6px;
+  padding: 4px 11px;
   font-size: 12px;
   color: #999;
   cursor: pointer;
+  transition: all 0.12s;
 }
 
-.modeBtnActive {
+.allocModeBtnActive {
   background: #111 !important;
   color: #fff !important;
   border-color: #111 !important;
 }
 
-.unitsInput {
-  width: 52px;
-  padding: 4px 8px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 13px;
-  text-align: center;
-  outline: none;
+/* Grid of member cells */
+.allocGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
-.unitsInput:focus {
-  border-color: #111;
-}
-
-/* ── Results ────────────────────────────────────────── */
-.resultCards {
+.allocCell {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.resultCard {
-  display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: #f9f9f9;
-  border-radius: 12px;
+  padding: 12px 8px 10px;
+  border-radius: 10px;
+  background: #f7f7f7;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+  text-align: center;
+  gap: 4px;
 }
 
-.resultAvatar {
-  width: 36px;
-  height: 36px;
+.allocCell:hover {
+  background: #f0f0f0;
+}
+
+.allocAvatar {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: #111;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  transition: opacity 0.12s;
+}
+
+.allocCellName {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.allocCellNameOff {
+  color: #bbb;
+}
+
+.allocCheck {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+
+.allocCheckOn {
+  background: #111;
+  border-color: #111;
+}
+
+.allocCellShare {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.allocUnitsWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.allocUnitsInput {
+  width: 52px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: center;
+  outline: none;
+  background: #fff;
+}
+
+.allocUnitsInput:focus {
+  border-color: #111;
+}
+
+.allocUnitLabel {
+  font-size: 10px;
+  color: #bbb;
+}
+
+/* ── Results ────────────────────────────────────────── */
+
+/* 2-column summary grid */
+.resultSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.resultSummaryCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px;
+  background: #f7f7f7;
+  border-radius: 14px;
+  text-align: center;
+  gap: 6px;
+}
+
+.resultSummaryAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.resultSummaryName {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.resultSummaryAmt {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+}
+
+/* Per-person breakdown cards */
+.resultBreakdownCard {
+  border: 1px solid #eee;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.resultBreakdownHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.resultBreakdownAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
-.resultName {
+.resultBreakdownName {
   flex: 1;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: #111;
 }
 
-.resultAmt {
-  font-size: 17px;
+.resultBreakdownTotal {
+  font-size: 15px;
   font-weight: 700;
   color: #111;
 }
 
-.summaryBox {
-  border: 1px solid #eee;
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
+.resultBreakdownItems {
+  padding: 8px 16px 12px;
 }
 
-.summaryRow {
+.resultBreakdownRow {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
-  color: #777;
-  padding: 4px 0;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #f9f9f9;
 }
 
-.summaryTotal {
-  border-top: 1px solid #eee;
-  margin-top: 6px;
-  padding-top: 10px;
-  font-size: 15px;
-  font-weight: 700;
+.resultBreakdownRow:last-child {
+  border-bottom: none;
+}
+
+.resultBreakdownItemName {
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+}
+
+.resultBreakdownChargeName {
+  font-size: 13px;
+  color: #aaa;
+  flex: 1;
+}
+
+.resultBreakdownItemAmt {
+  font-size: 13px;
+  font-weight: 500;
   color: #111;
 }
 
-.copyBtn {
-  width: 100%;
-  background: #f4f4f4;
+/* Copy button (used in navRow) */
+.copyBtn2 {
+  flex: 1;
+  background: #111;
+  color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 13px;
+  padding: 12px 20px;
   font-size: 14px;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
   cursor: pointer;
-  margin-bottom: 20px;
+  transition: background 0.15s;
 }
 
-.copyBtn:hover {
-  background: #eee;
+.copyBtn2:hover {
+  background: #333;
 }
 
 /* ── Saweria ────────────────────────────────────────── */
