@@ -133,7 +133,7 @@ export default function SplitBillApp() {
   // ─── Allocation helpers ────────────────────────────────────────
   // allocs[itemIdx][member] = { mode: 'equal'|'units', units: number, checked: bool }
   function getAlloc(itemIdx, member) {
-    return allocs[itemIdx]?.[member] || { mode: 'equal', units: 1, checked: true };
+    return allocs[itemIdx]?.[member] || { mode: 'equal', units: 1, checked: false };
   }
 
   function toggleMemberItem(itemIdx, member) {
@@ -174,6 +174,17 @@ export default function SplitBillApp() {
       next[i] = {};
       members.forEach((m) => {
         next[i][m] = { mode: 'equal', units: 1, checked: true };
+      });
+    });
+    setAllocs(next);
+  }
+
+  function setAllUnchecked() {
+    const next = {};
+    items.forEach((_, i) => {
+      next[i] = {};
+      members.forEach((m) => {
+        next[i][m] = { mode: 'equal', units: 1, checked: false };
       });
     });
     setAllocs(next);
