@@ -244,23 +244,13 @@ export default function SplitBillApp() {
 
   // ─── Copy summary ──────────────────────────────────────────────
   function copyResults() {
-    const { totals, svcAmt, taxAmt, total, breakdown } = calcResults();
+    const { totals, total } = calcResults();
     let text = '🧾 Bill Split — splitbill.co.id\n\n';
     members.forEach((m) => {
       text += `${m}: ${fmt(totals[m])}\n`;
-      const items = breakdown[m];
-      items.forEach((it) => {
-        text += `  ${it.name} ×${it.qty} … ${fmt(it.share)}\n`;
-      });
-      if (items._svcShare) text += `  Service … ${fmt(items._svcShare)}\n`;
-      if (items._taxShare) text += `  Tax (PPN) … ${fmt(items._taxShare)}\n`;
-      text += '\n';
     });
-    text += `Subtotal: ${fmt(subtotal)}\n`;
-    text += `Service: ${fmt(svcAmt)}\n`;
-    text += `Tax: ${fmt(taxAmt)}\n`;
-    text += `Total: ${fmt(total)}\n`;
-    text += '\nSplit fairly with SplitBill 🍽️';
+    text += `\nTotal: ${fmt(total)}`;
+    text += '\n\nSplit fairly with SplitBill 🍽️';
     navigator.clipboard.writeText(text).catch(() => {});
   }
 
@@ -655,7 +645,7 @@ export default function SplitBillApp() {
                           {m}
                         </span>
                         <div className={`${styles.allocCheck} ${isChecked ? styles.allocCheckOn : ''}`}>
-                          {isChecked && <svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none"/></svg>}
+                          {isChecked && <svg width="8" height="8" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" fill="none"/></svg>}
                         </div>
                         {isChecked && mode === 'units' ? (
                           <div className={styles.allocUnitsWrap} onClick={(e) => e.stopPropagation()}>
